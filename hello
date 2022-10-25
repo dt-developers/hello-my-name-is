@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+#
+# hello-my-name-is - name badge creator
+#
+
+EMOJI=(⛲ 💩 🤓 🪟 🌈 ❤️ 😊 ✨ 🦾 🧑‍💻 🔥 👍 😂 💀 🏳️‍🌈 🍎 🤳  👉 🎉 😍 👀 😉 🥰 ⭐ 🐧 👇 🤔 🤩 🥺 👻 🥳 👩‍💻 ➡️ 🥲)
+
+function rainbowify() {
+	local COLOR=$(( 15 + $RANDOM % 215 ))
+	echo -ne "\e[38;5;${COLOR}m$@\e[m"
+}
+
+TMP="/tmp"
+if [ ! -e $TMP ]; then
+	TMP='.'
+fi
+
+NAME="$1"
+shift
+if [ -z "$NAME" ]; then 
+	rainbowify "Hey, who are you? "
+	read NAME;
+fi
+NAME="${NAME:="No Name"}"
+
+EMOTE="$1"
+shift
+if [ -z "${EMOTE}" ]; then
+	rainbowify "What is your favorite number from 0 to ${#EMOJI[@]}? "
+	read EMOTE 
+fi
+EMOTE=${EMOJI[$EMOTE]}
+EMOTE="${EMOTE:="⛔"}"
+
+convert \
+	-pointsize 38 \
+	-gravity Center \
+	-background None \
+	pango:"${EMOTE}" \
+	\( \
+		+clone \
+		-background white \
+		-shadow 100x4 \
+		-channel A \
+		-level 0,3% \
+		+channel \
+	\) \
+	+swap \
+	+repage \
+	-composite \
+	$TMP/badge.emote.png
+
+convert \
+	-pointsize 24 \
+	-background white \
+	hello.jpg \
+	-font Candice \
+	-background none \
+	\( \
+		-gravity Center \
+		-pointsize 125 \
+		-fill '#B41F25' \
+		-resize 420x150 \
+		pango:"${NAME}" \
+	\) \
+	-composite \
+	\( \
+		-gravity South \
+		$TMP/badge.emote.png \
+	\) \
+	-composite \
+	-rotate 270 \
+	$TMP/badge.png
+
+if command -v ppa6 > /dev/null; then
+	if [ ! -z "$A6_PRINTER" ]; then
+		ppa6 -m "$A6_PRINTER" -pA6 -b 100 -c 2 -i $TMP/badge.png
+	else
+		rainbowify 'Please set printer mac address as A6_PRINTER env.\n'
+	fi
+else
+	rainbowify 'No ppa6 (pip install ppa6) found.\n'
+fi
+
+if command -v chafa; then
+	convert -rotate 90 $TMP/badge.png png:- | chafa -
+else
+	rainbowify 'No "chafa" found, not outputting image to console.\n'
+fi
+
+echo
+rainbowify 'Done. Is the next one ready? '
+read AGAIN
+reset
+
+$0
+
+
