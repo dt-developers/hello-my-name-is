@@ -1,98 +1,296 @@
-#!/usr/bin/env bash
-#
-# hello-my-name-is - name badge creator
-#
-
-EMOJI=(⛲ 💩 🤓 🪟 🌈 ❤️ 😊 ✨ 🦾 🧑‍💻 🔥 👍 😂 💀 🏳️‍🌈 🍎 🤳  👉 🎉 😍 👀 😉 🥰 ⭐ 🐧 👇 🤔 🤩 🥺 👻 🥳 👩‍💻 ➡️ 🥲)
-
-function rainbowify() {
-	local COLOR=$(( 15 + $RANDOM % 215 ))
-	echo -ne "\e[38;5;${COLOR}m$@\e[m"
-}
-
-TMP="/tmp"
-if [ ! -e $TMP ]; then
-	TMP='.'
-fi
-
-NAME="$1"
-shift
-if [ -z "$NAME" ]; then 
-	rainbowify "Hey, who are you? "
-	read NAME;
-fi
-NAME="${NAME:="No Name"}"
-
-EMOTE="$1"
-shift
-if [ -z "${EMOTE}" ]; then
-	rainbowify "What is your favorite number from 0 to ${#EMOJI[@]}? "
-	read EMOTE 
-fi
-EMOTE=${EMOJI[$EMOTE]}
-EMOTE="${EMOTE:="⛔"}"
-
-convert \
-	-pointsize 38 \
-	-gravity Center \
-	-background None \
-	pango:"${EMOTE}" \
-	\( \
-		+clone \
-		-background white \
-		-shadow 100x4 \
-		-channel A \
-		-level 0,3% \
-		+channel \
-	\) \
-	+swap \
-	+repage \
-	-composite \
-	$TMP/badge.emote.png
-
-convert \
-	-pointsize 24 \
-	-background white \
-	hello.jpg \
-	-font Candice \
-	-background none \
-	\( \
-		-gravity Center \
-		-pointsize 125 \
-		-fill '#B41F25' \
-		-resize 420x150 \
-		pango:"${NAME}" \
-	\) \
-	-composite \
-	\( \
-		-gravity South \
-		$TMP/badge.emote.png \
-	\) \
-	-composite \
-	-rotate 270 \
-	$TMP/badge.png
-
-if command -v ppa6 > /dev/null; then
-	if [ ! -z "$A6_PRINTER" ]; then
-		ppa6 -m "$A6_PRINTER" -pA6 -b 100 -c 2 -i $TMP/badge.png
-	else
-		rainbowify 'Please set printer mac address as A6_PRINTER env.\n'
-	fi
-else
-	rainbowify 'No ppa6 (pip install ppa6) found.\n'
-fi
-
-if command -v chafa; then
-	convert -rotate 90 $TMP/badge.png png:- | chafa -
-else
-	rainbowify 'No "chafa" found, not outputting image to console.\n'
-fi
-
-echo
-rainbowify 'Done. Is the next one ready? '
-read AGAIN
-reset
-
-$0
+#!/usr/bin/env python3
+import pygame
+import pygame_emojis
+import subprocess
 
 
+class BadgeCreator:
+    def __init__(
+            self,
+            font_size=63,
+            badge_size=(4450, 2380),
+            emoji_size=(640, 640),
+            hello_bar_color=pygame.color.Color('firebrick'),
+            hello_text_color=pygame.color.Color('white'),
+            hello_bar_end=780,
+            name_bar_color=pygame.color.Color('white'),
+            name_text_color=pygame.color.Color('firebrick'),
+            bottom_bar_color=pygame.color.Color('firebrick'),
+            bottom_bar_start=2100,
+    ):
+        self.font_size = font_size
+        self.badge_size = badge_size
+        self.emoji_size = emoji_size
+        self.hello_bar_color = hello_bar_color
+        self.hello_text_color = hello_text_color
+        self.hello_bar_end = hello_bar_end
+        self.name_bar_color = name_bar_color
+        self.name_text_color = name_text_color
+        self.bottom_bar_color = bottom_bar_color
+        self.bottom_bar_start = bottom_bar_start
+        self.fallback_font = pygame.font.SysFont(pygame.font.get_default_font(), self.font_size)
+        self.width, self.height = self.badge_size
+        self.emoji_width, self.emoji_height = self.emoji_size
+
+    def create(self, name, image_or_emoji, font_name=None, hello_text="Hello, my name is"):
+        pygame.font.init()
+        font = pygame.font.SysFont(font_name, self.font_size)
+
+        hello_bar = (0, 0, self.width, self.hello_bar_end)
+        name_bar = (0, self.hello_bar_end, self.width, self.bottom_bar_start)
+        bottom_bar = (0, self.bottom_bar_start, self.width, self.height)
+        emoji_bar = (
+            self.width / 2 - self.emoji_width / 2,
+            self.height - self.emoji_height,
+            self.width / 2 + self.emoji_width / 2,
+            self.height
+        )
+
+        badge_surface = pygame.surface.Surface(self.badge_size)
+
+        # draw backgrounds
+        badge_surface.fill(self.hello_bar_color, hello_bar)
+        badge_surface.fill(self.name_bar_color, name_bar)
+        badge_surface.fill(self.bottom_bar_color, bottom_bar)
+
+        self.draw_centered_text(hello_text, self.hello_text_color, self.hello_bar_color, font, badge_surface, hello_bar)
+        self.draw_centered_text(name, self.name_text_color, self.name_bar_color, font, badge_surface, name_bar)
+        self.draw_centered_image(image_or_emoji, badge_surface, emoji_bar)
+
+        return badge_surface
+
+    def draw_centered_text(self, text, text_color, background_color, font, target, target_rect):
+        target_width = (target_rect[2] - target_rect[0]) * 0.9
+        target_height = (target_rect[3] - target_rect[1]) * 0.8
+        target_offset_x = target_rect[0] + 0.05 * target_width
+        target_offset_y = target_rect[1] + 0.1 * target_height
+
+        try:
+            text_surface = font.render(text, True, text_color, background_color)
+        except pygame.error:
+            text_surface = self.fallback_font.render(text, True, text_color, background_color)
+
+        text_width, text_height = text_surface.get_size()
+
+        text_base_surface = pygame.surface.Surface((text_width, text_height))
+        text_base_surface.fill(background_color)
+        text_base_surface.blit(text_surface, (0, 0))
+
+        if text_width > text_height:
+            factor = target_width / float(text_width)
+
+            if text_height * factor > target_height:
+                factor = target_height / float(text_height)
+        else:
+            factor = target_height / float(text_height)
+
+            if text_width * factor > target_width:
+                factor = target_width / float(text_width)
+
+        scaled_size = (text_width * factor, text_height * factor)
+        scaled_surface = pygame.surface.Surface(scaled_size)
+        scaled_surface.blit(text_surface, (0, 0))
+        pygame.transform.scale(text_base_surface, scaled_size, scaled_surface)
+
+        dest = (target_offset_x + target_width / 2.0 - scaled_size[0] / 2.0,
+                target_offset_y + target_height / 2.0 - scaled_size[1] / 2.0)
+        target.blit(scaled_surface, dest=dest)
+
+    def draw_centered_image(self, image, target, target_rect):
+        target_width = target_rect[2] - target_rect[0]
+        target_height = target_rect[3] - target_rect[1]
+
+        if image.isascii():
+            text_surface = pygame.image.load(image)
+            text_surface = pygame.transform.scale(text_surface, (target_width, target_height))
+            target.blit(text_surface, dest=target_rect)
+        else:
+            emoji = pygame_emojis.load_emoji(image, (target_width, target_height))
+            emoji_base = pygame.surface.Surface(self.emoji_size, emoji.get_flags())
+            emoji_base.fill((255, 255, 255, 255),
+                            (target_rect[0], target_rect[1], target_rect[2], target_rect[3] / 2.0))
+
+            pygame.draw.circle(emoji_base, (255, 255, 255, 255), (self.emoji_width / 2, self.emoji_height / 2),
+                               self.emoji_height / 2)
+
+            emoji_base.blit(emoji, (0, 0))
+            target.blit(emoji_base, dest=target_rect)
+
+
+def menu():
+    def prompt(message="", persona="badgey", newline=True):
+        if newline:
+            end = "\n"
+        else:
+            end = ""
+
+        color_esc = "\033["
+        color = "32m"
+        color_end = f"{color_esc}m"
+
+        print(f"{color_esc}{color}{persona.upper()}{color_end}: {message.upper()}", end=end)
+
+    def print_badge(badge_file, printer="", quality=100):
+        subprocess.call(f"echo ppa6 -m \"{printer}\" -pA6 -b {quality} -c 2 -i {badge_file}".split(" "))
+
+    def user_preview():
+        def render_font_previews(basename):
+            pygame.font.init()
+            creator = BadgeCreator()
+
+            fonts = pygame.font.get_fonts()
+            font_count = len(pygame.font.get_fonts())
+            for index, selected_font in enumerate(fonts):
+                print(f"{index} / {font_count}: {selected_font}")
+                badge = creator.create(
+                    name=f"{selected_font} Fairy",
+                    image_or_emoji="😻",
+                    font_name=selected_font
+                )
+
+                pygame.image.save(badge, f"{basename}{selected_font}.png")
+
+        import sys
+        import os
+        basename = f"previews/{sys.platform}"
+        os.makedirs(basename, exist_ok=True)
+        render_font_previews(f"{basename}/badge")
+        prompt(f"done previewing on {sys.platform}.")
+        return False
+
+    def user_list_fonts():
+        pygame.font.init()
+        fonts = pygame.font.get_fonts()
+        fonts_per_page = 20
+        for page in range(0, len(fonts), fonts_per_page):
+            for font_index in range(page, min(len(fonts), page + fonts_per_page)):
+                prompt(fonts[font_index], f"font {font_index}")
+
+            prompt("More?")
+            c = input()
+            if c == "y":
+                continue
+            else:
+                break
+
+        return False
+
+    def user_search_fonts():
+        pygame.font.init()
+        fonts = pygame.font.get_fonts()
+        prompt("What are you looking for?")
+        prompt("", "you", False)
+        what = input()
+
+        filtered = list(filter(lambda x: x.find(what) >= 0, fonts))
+
+        for f in filtered:
+            prompt(f"I found font '{f}'.")
+
+        return False
+
+    def user_help():
+        prompt("Welcome to the interactive badge creation utility.")
+        prompt("My name is badgey and I am here to help you type things")
+        prompt("and getting things done.")
+        prompt("I am not an ai, I'm just a prompt.")
+        prompt("You have the following options of verbs I can understand")
+        for option in options:
+            prompt(option)
+        return False
+
+    def user_start():
+        emoji_list = list(
+            filter(
+                lambda x:
+                pygame_emojis.emoji.EMOJI_DATA[x]['en'].find('face') >= 0,
+                pygame_emojis.emoji.EMOJI_DATA
+            )
+        )
+
+        prompt("Starting the badge creation for the event ...")
+
+        prompt("What font do you want?")
+        prompt("", "you", False)
+        font_name = input()
+
+        pygame.font.init()
+        creator = BadgeCreator()
+
+        event_over = False
+        while not event_over:
+            prompt("Hey attendee of ${EVENT}.")
+            prompt("How should we call you?")
+            prompt("", "you", False)
+            name = input()
+
+            while len(name) < 4:
+                prompt("please use more then 4 letters.")
+                prompt("", "you", False)
+                name = input()
+
+            prompt(f"Thank you, {name}.")
+            prompt(f"What is your favorite number from one to {len(emoji_list)}?")
+            prompt("", "you", False)
+            number = input()
+
+            try:
+                number = int(number)
+            except ValueError:
+                import random
+                number = 42
+
+            prompt(f"Creating your badge ...")
+            try:
+                emoji = emoji_list[number]
+            except IndexError:
+                emoji = emoji_list[0]
+
+            badge = creator.create(name=name, image_or_emoji=emoji, font_name=font_name)
+            badge_file_name = "attendee-badge.png"
+            pygame.image.save(badge, badge_file_name)
+
+            subprocess.call(('chafa', badge_file_name))
+            print_badge(badge_file_name)
+
+            prompt("Done, enjoy ${EVENT}.")
+            prompt("", "you", False)
+
+            if input().lower() == "exit":
+                event_over = True
+
+        return False
+
+    def user_exit():
+        prompt("k, thx, bye.")
+        return True
+
+    options = {
+        'preview': user_preview,
+        'help': user_help,
+        'list fonts': user_list_fonts,
+        'search fonts': user_search_fonts,
+        'start': user_start,
+        'exit': user_exit,
+    }
+
+    prompt()
+    prompt("Hello, what do you want do?")
+
+    prompt("", "you", False)
+    selection = input()
+
+    end_this = False
+
+    if selection in options:
+        end_this = options[selection]()
+        prompt("", "")
+    else:
+        user_help()
+        prompt("", "")
+
+    if not end_this:
+        menu()
+
+
+menu()
