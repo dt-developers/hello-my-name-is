@@ -22,6 +22,7 @@ def words_in_emoji_table(words, emoji_key):
 def create_emojis(words=None):
     if words is None:
         words = ['smile', 'cat']
+
     return list(
         filter(
             lambda x:
@@ -143,17 +144,21 @@ class Menu:
     def __init__(self):
         self.emoji_list = create_emojis()
         self.font_name = None
+        self.event_name = None
 
         self.options = {
-            'preview badges': self.user_preview,
-            'help': self.user_help,
-            'list fonts': self.user_list_fonts,
-            'search fonts': self.user_search_fonts,
-            'set font': self.user_change_font,
-            'set emojis': self.user_create_emoji,
             'start': self.user_start,
             'exit': self.user_exit,
-            'debug': self.user_debug_colors,
+            'save': self.user_save_configuration,
+            'load': self.user_load_configuration,
+            'list fonts': self.user_list_fonts,
+            'search fonts': self.user_search_fonts,
+            'set event': self.user_set_event_name,
+            'set font': self.user_set_font,
+            'set emojis': self.user_set_emojis,
+            'render previews': self.user_preview,
+            'help': self.user_help,
+            'debug': self.user_debug,
         }
 
     def menu(self):
@@ -213,10 +218,15 @@ class Menu:
 
         return False
 
-    def user_change_font(self):
+    def user_set_font(self):
         prompt("What font do you want?")
         prompt("", "you", False)
         self.font_name = input()
+
+    def user_set_event_name(self):
+        prompt("What event is this?")
+        prompt("", "you", False)
+        self.event_name = input()
 
     def user_help(self):
         prompt("Welcome to the interactive badge creation utility.", rainbow=True)
@@ -237,7 +247,7 @@ class Menu:
 
         event_over = False
         while not event_over:
-            prompt("Hey attendee of ${EVENT}, how should we call you?", rainbow=True)
+            prompt(f"Hey attendee of {self.event_name}, how should we call you?", rainbow=True)
             prompt("", "you", False)
             name = input()
 
@@ -274,11 +284,11 @@ class Menu:
             subprocess.call(('chafa', badge_file_name))
             print_badge(badge_file_name)
 
-            prompt("Done, enjoy ${EVENT}.")
+            prompt(f"Done, enjoy {self.event_name}.")
 
         return False
 
-    def user_create_emoji(self):
+    def user_set_emojis(self):
         prompt(f"What emojis do you want to look for? (coma separated)")
         prompt("", "you", False)
         words = input().split(",")
@@ -292,7 +302,7 @@ class Menu:
         prompt("k, thx, bye.", rainbow=True)
         return True
 
-    def user_debug_colors(self):
+    def user_debug(self):
         print("term colors")
         for r in range(6):
             for g in range(6):
@@ -300,3 +310,41 @@ class Menu:
                     index = term_color(r / 6, g / 6, b / 6)
                     print(f"\033[38;5;{index}m{index:03d} ", end='')
             print()
+
+        print("configuration")
+        print(f"event = {self.event_name}")
+        print(f"font = {self.font_name}")
+        print(f"emojis = {','.join(self.emoji_list)}")
+
+        return False
+
+    def user_save_configuration(self):
+        config = open(".configuration", "w")
+        config.write(f"emojis={','.join(self.emoji_list)}")
+        config.write('\n')
+        config.write(f"font={self.font_name}")
+        config.write('\n')
+        config.write(f"event={self.event_name}")
+        config.write('\n')
+        config.close()
+
+        return False
+
+    def user_load_configuration(self):
+        config = open(".configuration", "r")
+
+        for line in config.readlines():
+            key, value = line.split("=")
+            value = value.replace('\n', '')
+            if key == "emojis":
+                self.emoji_list = value.split(",")
+            elif key == "font":
+                self.font_name = value
+            elif key == "event":
+                self.event_name = value
+            else:
+                print(f"configuration key '{key}' not understood.")
+
+        config.close()
+
+        return False
