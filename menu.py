@@ -343,7 +343,7 @@ class Menu:
             elif key == "event":
                 self.event_name = value
             else:
-                print(f"configuration key '{key}' not understood.")
+                print(f"Configuration key '{key}' not understood.")
 
         config.close()
 
