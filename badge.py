@@ -69,22 +69,25 @@ class BadgeCreator:
 
     def print(self, badge):
         if printer_mac:
-            pygame.image.save(badge, "/tmp/badge.png")
-            image = PIL.Image.open("/tmp/badge.png")
-            rotated = image.rotate(90, expand=True)
-            
-            if not self.printer:
-                print("new printer found")
-                self.printer = ppa6.Printer(printer_mac)
-            
-            if not self.printer.isConnected():
-                print("connecting to printer")
-                self.printer.connect()
-            
-            self.printer.printImage(rotated)
-            self.printer.printBreak(64)
+            try:
+                pygame.image.save(badge, "/tmp/badge.png")
+                image = PIL.Image.open("/tmp/badge.png")
+                rotated = image.rotate(90, expand=True)
+                
+                if not self.printer:
+                    print("new printer found")
+                    self.printer = ppa6.Printer(printer_mac)
+                
+                if not self.printer.isConnected():
+                    print("connecting to printer")
+                    self.printer.connect()
+                
+                self.printer.printImage(rotated)
+                self.printer.printBreak(64)
 
-            print(f"batery left: {self.printer.getDeviceBattery():03d}%")
+                print(f"batery left: {self.printer.getDeviceBattery():03d}%")
+            except bluetooth.btcommon.BluetoothError:
+                print("Bluetooth error, please try again")
 
 
     def draw_centered_text(self, text, text_color, background_color, font, target, target_rect):
