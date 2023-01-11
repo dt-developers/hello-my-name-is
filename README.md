@@ -9,4 +9,4 @@ A script [hello](./hello) is using bash, imagemagick and pythons ppa6 to generat
 Any feedback is appreciated:
 
 * developers@telekom.de
-* [issues](https://github.com/dt-developers/tadhack-2022/issues)
+* [issues](https://github.com/dt-developers/hello-my-name-is/issues)
