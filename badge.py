@@ -1,6 +1,7 @@
 import pygame
 import pygame_emojis
 import os
+import bluetooth.btcommon
 
 if "A6_PRINTER" in os.environ:
     print("Found a printer address!")
@@ -41,7 +42,6 @@ class BadgeCreator:
 
     def create(self, name, image_or_emoji, font_name=None, hello_text="Hello, my name is"):
         pygame.font.init()
-        print(f"font: {font_name}")
         font = pygame.font.SysFont(font_name, self.font_size)
 
         hello_bar = (0, 0, self.width, self.hello_bar_end)

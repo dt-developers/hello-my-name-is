@@ -86,9 +86,11 @@ def hsv(index, length):
 
 def rainbowify(message, background=False):
     if background:
-        layer_code = 48
+        layer_code = f"38;5;0;1m{color_escape_sequence}48"
     else:
-        layer_code = 38
+        layer_code = "38"
+
+    message = f"  {message}  "
 
     return "".join(
         list(
@@ -248,7 +250,7 @@ class Menu:
             name = input()
 
             while len(name) < 4:
-                prompt("please use more then 4 letters.", rainbow=True)
+                prompt("Please use more then 4 letters.", rainbow=True)
                 prompt("", "you", False)
                 name = input()
 
@@ -257,7 +259,7 @@ class Menu:
                 continue
 
             prompt(f"Thank you, {name}.")
-            prompt(f"What is your favorite number from one to {len(self.emoji_list)}?")
+            prompt(f"What is your favorite number from '0' to '{len(self.emoji_list)}'?")
             prompt("", "you", False)
             number = input()
 
