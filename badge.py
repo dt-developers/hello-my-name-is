@@ -67,7 +67,6 @@ class BadgeCreator:
         try:
             text_surface = font.render(text, True, text_color, background_color)
         except pygame.error:
-            print("NOPE")
             text_surface = self.fallback_font.render(text, True, text_color, background_color)
 
         text_width, text_height = text_surface.get_size()
