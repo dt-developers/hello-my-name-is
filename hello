@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
 import menu
 
-menu.Menu().menu()
+m = menu.Menu()
+m.load_configuration()
+m.menu()

@@ -1,5 +1,13 @@
 import pygame
 import pygame_emojis
+import os
+
+if "A6_PRINTER" in os.environ:
+    print("Found a printer address!")
+    import ppa6
+    import PIL
+    import PIL.Image
+    printer_mac = os.environ["A6_PRINTER"]
 
 
 class BadgeCreator:
@@ -29,6 +37,7 @@ class BadgeCreator:
         self.fallback_font = pygame.font.SysFont(pygame.font.get_default_font(), self.font_size)
         self.width, self.height = self.badge_size
         self.emoji_width, self.emoji_height = self.emoji_size
+        self.printer = None
 
     def create(self, name, image_or_emoji, font_name=None, hello_text="Hello, my name is"):
         pygame.font.init()
@@ -57,6 +66,26 @@ class BadgeCreator:
         self.draw_centered_image(image_or_emoji, badge_surface, emoji_bar)
 
         return badge_surface
+
+    def print(self, badge):
+        if printer_mac:
+            pygame.image.save(badge, "/tmp/badge.png")
+            image = PIL.Image.open("/tmp/badge.png")
+            rotated = image.rotate(90, expand=True)
+            
+            if not self.printer:
+                print("new printer found")
+                self.printer = ppa6.Printer(printer_mac)
+            
+            if not self.printer.isConnected():
+                print("connecting to printer")
+                self.printer.connect()
+            
+            self.printer.printImage(rotated)
+            self.printer.printBreak(64)
+
+            print(f"batery left: {self.printer.getDeviceBattery():03d}%")
+
 
     def draw_centered_text(self, text, text_color, background_color, font, target, target_rect):
         target_width = (target_rect[2] - target_rect[0]) * 0.9

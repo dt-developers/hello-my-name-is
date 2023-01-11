@@ -125,15 +125,11 @@ def prompt(message="", persona="badgey", newline=True, rainbow=False):
         end = ""
 
     if rainbow:
-        user_prompt = f"{rainbowify(persona.upper())}: {rainbowify(message.upper(), True)}"
+        user_prompt = f"{rainbowify(persona.upper())}: {rainbowify(message, True)}"
     else:
-        user_prompt = f"{persona.upper()}: {message.upper()}"
+        user_prompt = f"{persona.upper()}: {message}"
 
     print(user_prompt, end=end)
-
-
-def print_badge(badge_file, printer="", quality=100):
-    subprocess.call(f"echo ppa6 -m \"{printer}\" -pA6 -b {quality} -c 2 -i {badge_file}".split(" "))
 
 
 color_escape_sequence = "\033["
@@ -149,8 +145,8 @@ class Menu:
         self.options = {
             'start': self.user_start,
             'exit': self.user_exit,
-            'save': self.user_save_configuration,
-            'load': self.user_load_configuration,
+            'save': self.save_configuration,
+            'load': self.load_configuration,
             'list fonts': self.user_list_fonts,
             'search fonts': self.user_search_fonts,
             'set event': self.user_set_event_name,
@@ -276,13 +272,13 @@ class Menu:
             except IndexError:
                 emoji = self.emoji_list[0]
 
-            print(emoji)
             badge = creator.create(name=name, image_or_emoji=emoji, font_name=self.font_name)
             badge_file_name = "attendee-badge.png"
             pygame.image.save(badge, badge_file_name)
 
             subprocess.call(('chafa', badge_file_name))
-            print_badge(badge_file_name)
+
+            creator.print(badge)
 
             prompt(f"Done, enjoy {self.event_name}.")
 
@@ -318,7 +314,7 @@ class Menu:
 
         return False
 
-    def user_save_configuration(self):
+    def save_configuration(self):
         config = open(".configuration", "w")
         config.write(f"emojis={','.join(self.emoji_list)}")
         config.write('\n')
@@ -330,7 +326,7 @@ class Menu:
 
         return False
 
-    def user_load_configuration(self):
+    def load_configuration(self):
         config = open(".configuration", "r")
 
         for line in config.readlines():
