@@ -40,7 +40,7 @@ class BadgeCreator:
         self.emoji_width, self.emoji_height = self.emoji_size
         self.printer = None
 
-    def create(self, name, image_or_emoji, font_name=None, hello_text="Hello, my name is"):
+    def create(self, name, image_or_emoji, font_name=None, title="Hello, my name is"):
         pygame.font.init()
         font = pygame.font.SysFont(font_name, self.font_size)
 
@@ -61,7 +61,7 @@ class BadgeCreator:
         badge_surface.fill(self.name_bar_color, name_bar)
         badge_surface.fill(self.bottom_bar_color, bottom_bar)
 
-        self.draw_centered_text(hello_text, self.hello_text_color, self.hello_bar_color, font, badge_surface, hello_bar)
+        self.draw_centered_text(title, self.hello_text_color, self.hello_bar_color, font, badge_surface, hello_bar)
         self.draw_centered_text(name, self.name_text_color, self.name_bar_color, font, badge_surface, name_bar)
         self.draw_centered_image(image_or_emoji, badge_surface, emoji_bar)
 
@@ -75,17 +75,17 @@ class BadgeCreator:
                 rotated = image.rotate(90, expand=True)
                 
                 if not self.printer:
-                    print("new printer found")
+                    print("New printer found")
                     self.printer = ppa6.Printer(printer_mac)
                 
                 if not self.printer.isConnected():
-                    print("connecting to printer")
+                    print("Connecting to printer")
                     self.printer.connect()
                 
                 self.printer.printImage(rotated)
                 self.printer.printBreak(64)
 
-                print(f"batery left: {self.printer.getDeviceBattery():03d}%")
+                print(f"Battery left: {self.printer.getDeviceBattery():03d}%")
             except bluetooth.btcommon.BluetoothError:
                 print("Bluetooth error, please try again")
 

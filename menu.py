@@ -4,6 +4,7 @@ import subprocess
 import math
 import sys
 import os
+import random
 
 from badge import BadgeCreator
 
@@ -143,6 +144,7 @@ class Menu:
         self.emoji_list = create_emojis()
         self.font_name = None
         self.event_name = None
+        self.title = "Hello, my name is"
 
         self.options = {
             'start': self.user_start,
@@ -154,6 +156,7 @@ class Menu:
             'set event': self.user_set_event_name,
             'set font': self.user_set_font,
             'set emojis': self.user_set_emojis,
+            'set title': self.user_set_title,
             'render previews': self.user_preview,
             'help': self.user_help,
             'debug': self.user_debug,
@@ -226,6 +229,11 @@ class Menu:
         prompt("", "you", False)
         self.event_name = input()
 
+    def user_set_title(self):
+        prompt("What should be the title of the badge?")
+        prompt("", "you", False)
+        self.title = input()
+
     def user_help(self):
         prompt("Welcome to the interactive badge creation utility.", rainbow=True)
         prompt("My name is badgey and I am here to help you type things")
@@ -249,24 +257,19 @@ class Menu:
             prompt("", "you", False)
             name = input()
 
-            while len(name) < 4:
-                prompt("Please use more then 4 letters.", rainbow=True)
-                prompt("", "you", False)
-                name = input()
-
             if name.lower() == "exit":
                 event_over = True
                 continue
 
             prompt(f"Thank you, {name}.")
-            prompt(f"What is your favorite number from '0' to '{len(self.emoji_list)}'?")
+            prompt(f"What is your favorite number?")
             prompt("", "you", False)
             number = input()
 
             try:
-                number = int(number)
+                number = int(number) % len(self.emoji_list)
             except ValueError:
-                number = 42
+                number = random.randint(0, len(self.emoji_list)-1)
 
             prompt(f"Creating your badge ...")
             try:
@@ -274,7 +277,7 @@ class Menu:
             except IndexError:
                 emoji = self.emoji_list[0]
 
-            badge = creator.create(name=name, image_or_emoji=emoji, font_name=self.font_name)
+            badge = creator.create(name=name, title=self.title, image_or_emoji=emoji, font_name=self.font_name)
             badge_file_name = "attendee-badge.png"
             pygame.image.save(badge, badge_file_name)
 
@@ -312,6 +315,7 @@ class Menu:
         print("configuration")
         print(f"event = {self.event_name}")
         print(f"font = {self.font_name}")
+        print(f"title = {self.title}")
         print(f"emojis = {','.join(self.emoji_list)}")
 
         return False
@@ -321,6 +325,8 @@ class Menu:
         config.write(f"emojis={','.join(self.emoji_list)}")
         config.write('\n')
         config.write(f"font={self.font_name}")
+        config.write('\n')
+        config.write(f"title={self.title}")
         config.write('\n')
         config.write(f"event={self.event_name}")
         config.write('\n')
@@ -340,6 +346,8 @@ class Menu:
                 self.font_name = value
             elif key == "event":
                 self.event_name = value
+            elif key == "title":
+                self.title = value
             else:
                 print(f"Configuration key '{key}' not understood.")
 
