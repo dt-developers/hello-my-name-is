@@ -262,18 +262,10 @@ class Menu:
                 continue
 
             prompt(f"Thank you, {name}.")
-            prompt(f"What is your favorite number?")
-            prompt("", "you", False)
-            number = input()
-
-            try:
-                number = int(number) % len(self.emoji_list)
-            except ValueError:
-                number = random.randint(0, len(self.emoji_list)-1)
 
             prompt(f"Creating your badge ...")
             try:
-                emoji = self.emoji_list[number]
+                emoji = self.emoji_list[0]
             except IndexError:
                 emoji = self.emoji_list[0]
 
