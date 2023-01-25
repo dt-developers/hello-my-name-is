@@ -13,8 +13,11 @@ Tested on Raspberry Pi 400, known to not working on MacOS (bluez not installable
 # Usage
 
 > ./hello
-> help
-> start
+
+ 
+`help`
+
+`start`
 
 The user comes to an attached screen, sees random images and is able to just print a badge, after entering a name and a number. The number references a predermined array of emoji or image pathes, and renderes them at the bottom center of the badge. This image / emoji is of great use for team building, and converstation starters.
 
