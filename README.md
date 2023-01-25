@@ -2,11 +2,11 @@
 
 A script [hello](./hello) is using bash, imagemagick and pythons ppa6 to generate a 'hello my name is badge'. 
 
-<img src="./badge.jpg" width="200"/>
+<img src="./attendee-badge.png" width="200"/>
 
 # Feedback
 
 Any feedback is appreciated:
 
 * developers@telekom.de
-* [issues](https://github.com/dt-developers/tadhack-2022/issues)
+* [issues](https://github.com/dt-developers/hello-my-name-is/issues)
