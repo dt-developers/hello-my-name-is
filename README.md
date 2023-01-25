@@ -1,8 +1,11 @@
 # Hello
 
-A script [hello](./hello) is using bash, imagemagick and pythons ppa6 to generate a 'hello my name is badge'. 
+Run script [hello](./hello) to generate 'hello my name is ...' badges.
+
+If an A6 thermo printer is attached, the `hello` script will print it.
 
 <img src="./attendee-badge.png" width="200"/>
+
 
 # Feedback
 
