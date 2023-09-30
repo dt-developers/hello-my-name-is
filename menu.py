@@ -5,6 +5,7 @@ import math
 import sys
 import os
 import random
+import time
 
 from badge import BadgeCreator
 
@@ -144,6 +145,7 @@ class Menu:
         self.emoji_list = create_emojis()
         self.font_name = None
         self.event_name = None
+        self.concentration = 1
         self.title = "Hello, my name is"
 
         self.options = {
@@ -157,6 +159,7 @@ class Menu:
             'set font': self.user_set_font,
             'set emojis': self.user_set_emojis,
             'set title': self.user_set_title,
+            'set concentration': self.user_set_concentration,
             'render previews': self.user_preview,
             'help': self.user_help,
             'debug': self.user_debug,
@@ -234,6 +237,11 @@ class Menu:
         prompt("", "you", False)
         self.title = input()
 
+    def user_set_concentration(self):
+        prompt("How dark do you want the badge?")
+        prompt("", "you", False)
+        self.concentration = input()
+
     def user_help(self):
         prompt("Welcome to the interactive badge creation utility.", rainbow=True)
         prompt("My name is badgey and I am here to help you type things")
@@ -261,14 +269,28 @@ class Menu:
                 event_over = True
                 continue
 
-            prompt(f"Thank you, {name}.")
+            prompt(f"Thank you, {name}.\n")
+
+            if len(self.emoji_list) > 1:
+                prompt(f"What is your favorite number?")
+                prompt("", "you", False)
+                number = input()
+
+                try:
+                    number = int(number) % len(self.emoji_list)
+                except ValueError:
+                    number = random.randint(0, len(self.emoji_list)-1)
+            else:
+                    number = 0
 
             prompt(f"Creating your badge ...")
             try:
-                emoji = self.emoji_list[0]
+                emoji = self.emoji_list[number]
             except IndexError:
                 emoji = self.emoji_list[0]
 
+            open('participation.csv', 'a').write(f'{time.time()};{name};{number};{emoji}\n')
+            
             badge = creator.create(name=name, title=self.title, image_or_emoji=emoji, font_name=self.font_name)
             badge_file_name = "attendee-badge.png"
             pygame.image.save(badge, badge_file_name)
@@ -340,6 +362,8 @@ class Menu:
                 self.event_name = value
             elif key == "title":
                 self.title = value
+            elif key == "concentration":
+                self.concentration = value
             else:
                 print(f"Configuration key '{key}' not understood.")
 

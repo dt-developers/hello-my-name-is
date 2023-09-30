@@ -24,6 +24,8 @@ class BadgeCreator:
             name_text_color=pygame.color.Color('firebrick'),
             bottom_bar_color=pygame.color.Color('firebrick'),
             bottom_bar_start=2100,
+            break_time=64,
+            concentration=2,
     ):
         self.font_size = font_size
         self.badge_size = badge_size
@@ -38,6 +40,8 @@ class BadgeCreator:
         self.fallback_font = pygame.font.SysFont(pygame.font.get_default_font(), self.font_size)
         self.width, self.height = self.badge_size
         self.emoji_width, self.emoji_height = self.emoji_size
+        self.break_time=break_time
+        self.concentration=concentration
         self.printer = None
 
     def create(self, name, image_or_emoji, font_name=None, title="Hello, my name is"):
@@ -82,8 +86,9 @@ class BadgeCreator:
                     print("Connecting to printer")
                     self.printer.connect()
                 
+                self.printer.setConcentration(self.concentration)
                 self.printer.printImage(rotated)
-                self.printer.printBreak(64)
+                self.printer.printBreak(self.break_time)
 
                 print(f"Battery left: {self.printer.getDeviceBattery():03d}%")
             except bluetooth.btcommon.BluetoothError:
